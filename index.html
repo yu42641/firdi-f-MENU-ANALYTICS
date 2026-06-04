@@ -1,228 +1,151 @@
-1 <!DOCTYPE html>
-     2 <html lang="zh-TW">
-     3 <head>
-     4     <meta charset="UTF-8">
-     5     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     6     <title>雪坊精品 | 銷售數據分析儀表板</title>
-     7     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-     8     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
-       rel="stylesheet">
-     9     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js/minified/introjs.min.css">
-    10     <script src="https://cdn.jsdelivr.net/npm/intro.js/minified/intro.min.js"></script>
-    11     <style>
-    12         :root { --primary-color: #003366; --accent-color: #c5a059; --bg-color: #fcfcfc; --text-color: #333333;
-       --border-color: #e0e0e0; --card-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-    13         * { box-sizing: border-box; font-family: 'Noto Sans TC', sans-serif; font-size: 15px; }
-    14         body { margin: 0; background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
-    15         .navbar { background-color: #ffffff; padding: 20px 0; text-align: center; border-bottom: 1px solid
-       var(--border-color); position: sticky; top: 0; z-index: 1000; }
-    16         .navbar .logo { font-size: 28px; font-weight: 700; color: var(--primary-color); letter-spacing: 4px; }
-    17         .nav-tabs { display: flex; justify-content: center; gap: 30px; margin-top: 15px; }
-    18         .nav-tab { cursor: pointer; padding: 10px 20px; color: #777; font-weight: 500; border-bottom: 2px solid
-       transparent; transition: 0.3s; text-decoration: none; }
-    19         .nav-tab.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
-    20         .container { max-width: 1200px; margin: 40px auto; padding: 0 30px; }
-    21         .filter-section { display: flex; justify-content: center; align-items: center; margin-bottom: 50px; gap: 20px; }
-    22         select { appearance: none; background-color: #fff; border: 1px solid var(--border-color); padding: 10px 40px
-       10px 20px; color: var(--primary-color); background-image: url("data:image/svg+xml,%3Csvg
-       xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23003366' d='M10.293
-       3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
-       background-repeat: no-repeat; background-position: right 15px center; cursor: pointer; }
-    23         .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 40px; }
-    24         .card { background: #ffffff; padding: 40px; border-radius: 4px; box-shadow: var(--card-shadow); border: 1px
-       solid #f2f2f2; }
-    25         .card-title { font-size: 20px; font-weight: 500; color: var(--primary-color); margin-bottom: 30px; text-align:
-       center; letter-spacing: 2px; }
-    26         table { width: 100%; border-collapse: collapse; }
-    27         th { background-color: #fcfcfc; color: var(--primary-color); padding: 15px; border-bottom: 2px solid
-       var(--primary-color); text-align: left; }
-    28         td { padding: 15px; border-bottom: 1px solid #f5f5f5; }
-    29         .badge { padding: 5px 15px; font-size: 12px; display: inline-block; }
-    30         .badge-hot { background-color: var(--primary-color); color: #fff; }
-    31         .badge-premium { background-color: #fdf6e9; color: var(--accent-color); border: 1px solid #faebcc; }
-    32         #ai-chat-widget { position: fixed; bottom: 30px; right: 30px; z-index: 2000; }
-    33         #chat-button { width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary-color); color:
-       white; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 15px
-       rgba(0,0,0,0.2); transition: 0.3s; }
-    34         #chat-window { position: absolute; bottom: 80px; right: 0; width: 350px; height: 500px; background: white;
-       border-radius: 12px; box-shadow: 0 5px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden;
-       border: 1px solid var(--border-color); }
-    35         #chat-window.active { display: flex; }
-    36         .chat-header { background: var(--primary-color); color: white; padding: 15px; font-weight: 500; display: flex;
-       justify-content: space-between; }
-    37         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction:
-       column; gap: 10px; }
-    38         .message { padding: 10px 15px; border-radius: 15px; max-width: 85%; font-size: 14px; }
-    39         .message.ai { background: #fff; align-self: flex-start; border: 1px solid #eee; }
-    40         .message.user { background: var(--primary-color); color: white; align-self: flex-end; }
-    41         .chat-input { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; }
-    42         .chat-input input { flex: 1; border: 1px solid #ddd; padding: 8px 12px; border-radius: 20px; outline: none; }
-    43         .chat-input button { background: var(--primary-color); color: white; border: none; padding: 8px 15px;
-       border-radius: 20px; cursor: pointer; }
-    44         #start-tutorial { position: fixed; bottom: 30px; left: 30px; background: var(--accent-color); color: white;
-       padding: 10px 20px; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 1000;
-       font-weight: 500; }
-    45         footer { text-align: center; padding: 60px 20px; color: #bbb; font-size: 12px; }
-    46     </style>
-    47 </head>
-    48 <body>
-    49 <nav class="navbar">
-    50     <div class="logo">SNOW FACTORY</div>
-    51     <div class="nav-tabs">
-    52         <a href="index.html" class="nav-tab active">數據分析儀表板</a>
-    53         <a href="playground/index.html" class="nav-tab">Playground (架構說明)</a>
-    54     </div>
-    55 </nav>
-    56 <div class="container">
-    57     <div class="filter-section" data-intro="在此選擇您想要查看的門市據點。">
-    58         <span>門市據點篩選：</span>
-    59         <select id="storeFilter" onchange="updateDashboard()">
-    60             <option value="全部">所有門市總覽</option>
-    61             <option value="高雄店">高雄旗艦店</option><option value="信義店">信義門市</option><option
-       value="新竹店">新竹門市</option>
-    62             <option value="桃園店">桃園門市</option><option value="台中一店">台中一店</option><option
-       value="板橋店">板橋門市</option>
-    63             <option value="內湖店">內湖門市</option><option value="台南店">台南門市</option>
-    64         </select>
-    65     </div>
-    66     <div class="dashboard-grid">
-    67         <div class="card" data-intro="銷量對比圖。"><div class="card-title">銷售數量對比</div><canvas
-       id="qtyChart"></canvas></div>
-    68         <div class="card" data-intro="營收價值對比圖。"><div class="card-title">營營價值對比</div><canvas
-       id="amtChart"></canvas></div>
-    69         <div class="card" data-intro="數據列表。"><div class="card-title">銷售品項詳情</div><table
-       id="summaryTable"><thead><tr><th>銷售品項</th><th>銷售總數</th><th>銷售金額</th><th>市場評估</th></tr></thead><tbody></t
-       body></table></div>
-    70     </div>
-    71 </div>
-    72 <div id="ai-chat-widget">
-    73     <div id="chat-button" onclick="toggleChat()" data-intro="問問 AI 助理數據洞察！"><svg width="30" height="30"
-       viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1
-       2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
-    74     <div id="chat-window">
-    75         <div class="chat-header"><span>SNOW AI 助理</span><span onclick="toggleChat()"
-       style="cursor:pointer">✕</span></div>
-    76         <div class="chat-messages" id="chat-messages"><div class="message ai">您好！請設定 API Key
-       即可開始分析。</div></div>
-    77         <div class="chat-input"><input type="text" id="user-input" placeholder="問問數據..."
-       onkeypress="if(event.key==='Enter') sendMessage()"><button onclick="sendMessage()">發送</button></div>
-    78         <div style="padding:10px;text-align:center"><a href="#" onclick="setApiKey()"
-       style="color:var(--accent-color);font-size:11px">設定 API Key</a></div>
-    79     </div>
-    80 </div>
-    81 <div id="start-tutorial" onclick="startTutorial()">新手教學 💡</div>
-    82 <footer>&copy; 2026 SNOW FACTORY.</footer>
-    83 <script>
-    84     const rawData =
-       [{date:"2026-01-01",store:"高雄店",item:"沙拉醬",qty:435,amt:44476},{date:"2026/2/2",store:"高雄店",item:"冷凍水餃",qty:
-       69,amt:17563},{date:"20260303",store:"信義店",item:"能量棒",qty:259,amt:9137},{date:"20260404",store:"新竹店",item:"蛋捲
-       ",qty:90,amt:17245},{date:"2026/5/5",store:"桃園店",item:"能量棒",qty:170,amt:28589},{date:"2026/6/6",store:"新竹店",ite
-       m:"湯包",qty:478,amt:16412},{date:"20260707",store:"台中一店",item:"布丁",qty:117,amt:26949},{date:"20260808",store:"板
-       橋店",item:"湯包",qty:438,amt:35337},{date:"2026/9/9",store:"高雄店",item:"即食雞胸",qty:326,amt:21056},{date:"2026/10/1
-       0",store:"新竹店",item:"杯裝優格",qty:59,amt:25965},{date:"2026-11-11",store:"內湖店",item:"蛋捲",qty:302,amt:4182},{dat
-       e:"2026-12-12",store:"板橋店",item:"冷凍水餃",qty:36,amt:5978},{date:"13 Feb
-       2026",store:"高雄店",item:"蛋捲",qty:126,amt:39221},{date:"2026-02-14",store:"內湖店",item:"沙拉醬",qty:309,amt:8748},{d
-       ate:"15 Apr 2026",store:"信義店",item:"即食雞胸",qty:325,amt:10652},{date:"16 May
-       2026",store:"桃園店",item:"布丁",qty:202,amt:48481},{date:"2026/5/17",store:"台南店",item:"沙拉醬",qty:6,amt:7791},{date
-       :"2026-06-18",store:"內湖店",item:"杯裝優格",qty:355,amt:36869},{date:"2026-08-20",store:"高雄店",item:"氣泡飲",qty:393,
-       amt:47527},{date:"20260921",store:"桃園店",item:"即食雞胸",qty:422,amt:42469},{date:"2026/10/22",store:"台南店",item:"冷
-       凍水餃",qty:303,amt:30605},{date:"20261123",store:"台南店",item:"即食雞胸",qty:150,amt:42971},{date:"2026/12/24",store:"
-       板橋店",item:"鮮奶茶",qty:67,amt:16079},{date:"2026/1/25",store:"高雄店",item:"即食雞胸",qty:389,amt:7414},{date:"2026/2
-       /26",store:"台中一店",item:"蛋捲",qty:259,amt:13879},{date:"20260327",store:"台南店",item:"杯裝優格",qty:58,amt:41974},{
-       date:"28 May 2026",store:"板橋店",item:"泡芙",qty:5,amt:48370},{date:"1 Jun
-       2026",store:"內湖店",item:"蛋捲",qty:166,amt:40248},{date:"2026/6/2",store:"台南店",item:"果醬",qty:376,amt:31548},{date
-       :"20260703",store:"桃園店",item:"即食雞胸",qty:150,amt:5117},{date:"2026/8/4",store:"桃園店",item:"巧克力餅乾",qty:209,a
-       mt:3117},{date:"5 Apr
-       2026",store:"板橋店",item:"冷凍水餃",qty:463,amt:12285},{date:"20261006",store:"桃園店",item:"沙拉醬",qty:100,amt:10787}
-       ,{date:"20261107",store:"台中一店",item:"杯裝優格",qty:36,amt:18131},{date:"2026-12-08",store:"信義店",item:"布丁",qty:3
-       33,amt:12731},{date:"20260109",store:"台南店",item:"沙拉醬",qty:270,amt:6192},{date:"2026/2/10",store:"內湖店",item:"堅
-       果包",qty:115,amt:3264},{date:"20260311",store:"桃園店",item:"氣泡飲",qty:94,amt:1619},{date:"20260412",store:"新竹店",i
-       tem:"杯裝優格",qty:466,amt:21394},{date:"2026-05-13",store:"新竹店",item:"杯裝優格",qty:181,amt:13434},{date:"20260614",
-       store:"板橋店",item:"湯包",qty:485,amt:34867},{date:"2026-07-15",store:"高雄店",item:"杯裝優格",qty:322,amt:7988},{date:
-       "2026-08-16",store:"桃園店",item:"堅果包",qty:226,amt:26361},{date:"2026/9/17",store:"高雄店",item:"蛋捲",qty:499,amt:66
-       36},{date:"2026/10/18",store:"新竹店",item:"蛋捲",qty:339,amt:4418},{date:"2026-11-19",store:"台中一店",item:"果醬",qty:
-       231,amt:38491},{date:"2026/12/20",store:"台南店",item:"布丁",qty:208,amt:29721},{date:"2026/1/21",store:"高雄店",item:"
-       即食雞胸",qty:300,amt:22729}];
-    85     let qtyChart, amtChart;
-    86     let geminiApiKey = localStorage.getItem('SNOW_GEMINI_KEY') || "";
-    87
-    88     function updateDashboard() {
-    89         const filter = document.getElementById('storeFilter').value;
-    90         const filtered = filter === '全部' ? rawData : rawData.filter(d => d.store === filter);
-    91         const agg = {};
-    92         filtered.forEach(d => { if(d.item) { if(!agg[d.item]) agg[d.item] = {qty:0,amt:0}; agg[d.item].qty += d.qty;
-       agg[d.item].amt += d.amt; } });
-    93         renderCharts(Object.keys(agg), Object.values(agg).map(v => v.qty), Object.values(agg).map(v => v.amt));
-    94         updateTable(agg);
-    95     }
-    96     function renderCharts(labels, qtys, amts) {
-    97         const colors = ['#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7', '#C7CEEA', '#A0E7E5', '#FF9AA2', '#F8B195',
-       '#FDFD96', '#FAC898'];
-    98         if (qtyChart) qtyChart.destroy(); if (amtChart) amtChart.destroy();
-    99         const opt = { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: {
-       beginAtZero: true, grid: { display: false } }, y: { grid: { display: false } } } };
-   100         qtyChart = new Chart(document.getElementById('qtyChart'), { type: 'bar', data: { labels, datasets: [{ data:
-       qtys, backgroundColor: colors, borderRadius: 4 }] }, options: opt });
-   101         amtChart = new Chart(document.getElementById('amtChart'), { type: 'bar', data: { labels, datasets: [{ data:
-       amts, backgroundColor: colors, borderRadius: 4 }] }, options: opt });
-   102     }
-   103     function updateTable(agg) {
-   104         const tbody = document.querySelector('#summaryTable tbody');
-   105         tbody.innerHTML = '';
-   106         const sorted = Object.keys(agg).sort((a, b) => agg[b].qty - agg[a].qty);
-   107         const maxQ = agg[sorted[0]]?.qty || 0;
-   108         sorted.forEach(item => {
-   109             let b = '<span class="badge">穩定</span>';
-   110             if (agg[item].qty === maxQ && maxQ > 0) b = '<span class="badge badge-hot">👑 熱銷首選</span>';
-   111             else if (item.includes('優格')) b = '<span class="badge badge-premium">核心產品</span>';
-   112             const row = document.createElement('tr');
-   113             row.innerHTML =
-       `<td><strong>${item}</strong></td><td>${agg[item].qty.toLocaleString()}</td><td>$${agg[item].amt.toLocaleString()}</td><
-       td>${b}</td>`;
-   114             tbody.appendChild(row);
-   115         });
-   116     }
-   117     function toggleChat() { document.getElementById('chat-window').classList.toggle('active'); }
-   118     function setApiKey() {
-   119         const key = prompt("輸入您的 Gemini API Key (將儲存在本地):", geminiApiKey);
-   120         if(key !== null) { geminiApiKey = key.trim(); localStorage.setItem('SNOW_GEMINI_KEY', geminiApiKey);
-       alert("設定成功！"); }
-   121     }
-   122     async function sendMessage() {
-   123         const input = document.getElementById('user-input');
-   124         const text = input.value.trim(); if(!text) return;
-   125         addMessage(text, 'user'); input.value = '';
-   126         if(!geminiApiKey) { addMessage("尚未設定 API Key。", 'ai'); return; }
-   127         addMessage("思考中...", 'ai', 'loading');
-   128         const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
-   129         let success = false;
-   130         for (const model of models) {
-   131             try {
-   132                 const res = await
-       fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
-   133                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-   134                     body: JSON.stringify({ contents: [{ parts: [{ text:
-       `你是一位銷售數據分析師。數據摘要：${JSON.stringify(rawData.slice(0,15))}。使用者問題：${text}` }] }] })
-   135                 });
-   136                 const data = await res.json();
-   137                 if (!data.error && data.candidates) {
-   138                     const aiText = data.candidates[0].content.parts[0].text;
-   139                     document.querySelector('.message.loading').remove();
-   140                     addMessage(aiText, 'ai'); success = true; break;
-   141                 }
-   142             } catch (e) {}
-   143         }
-   144         if (!success) { document.querySelector('.message.loading').remove(); addMessage("所有模型連線失敗，請檢查 API
-       Key 權限。", 'ai'); }
-   145     }
-   146     function addMessage(text, type, cls = '') { const div = document.createElement('div'); div.className = `message
-       ${type} ${cls}`; div.innerText = text; document.getElementById('chat-messages').appendChild(div);
-       document.getElementById('chat-messages').scrollTop = 99999; }
-   147     function startTutorial() { introJs().setOptions({ nextLabel: '下一步', prevLabel: '上一步', doneLabel: '完成',
-       steps: [ { title: '歡迎', intro: '這是數據儀表板。' }, { element: '.nav-tabs', intro: '點擊此處切換到 Playground
-       查看技術細節。' }, { element: '.filter-section', intro: '在此篩選門市。' }, { element: '#chat-button', intro: '與 AI
-       助理聊天。' } ] }).start(); }
-   148     updateDashboard();
-   149 </script>
-   150 </body>
-   151 </html>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雪坊精品 | 銷售數據分析儀表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js/minified/introjs.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/intro.js/minified/intro.min.js"></script>
+    <style>
+        :root { --primary-color: #003366; --accent-color: #c5a059; --bg-color: #fcfcfc; --text-color: #333333; --border-color: #e0e0e0; --card-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        * { box-sizing: border-box; font-family: 'Noto Sans TC', sans-serif; font-size: 15px; }
+        body { margin: 0; background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
+        .navbar { background-color: #ffffff; padding: 20px 0; text-align: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1000; }
+        .navbar .logo { font-size: 28px; font-weight: 700; color: var(--primary-color); letter-spacing: 4px; }
+        .nav-tabs { display: flex; justify-content: center; gap: 30px; margin-top: 15px; }
+        .nav-tab { cursor: pointer; padding: 10px 20px; color: #777; font-weight: 500; border-bottom: 2px solid transparent; transition: 0.3s; text-decoration: none; }
+        .nav-tab.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 30px; }
+        .filter-section { display: flex; justify-content: center; align-items: center; margin-bottom: 50px; gap: 20px; }
+        select { appearance: none; background-color: #fff; border: 1px solid var(--border-color); padding: 10px 40px 10px 20px; color: var(--primary-color); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23003366' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 15px center; cursor: pointer; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 40px; }
+        .card { background: #ffffff; padding: 40px; border-radius: 4px; box-shadow: var(--card-shadow); border: 1px solid #f2f2f2; }
+        .card-title { font-size: 20px; font-weight: 500; color: var(--primary-color); margin-bottom: 30px; text-align: center; letter-spacing: 2px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background-color: #fcfcfc; color: var(--primary-color); padding: 15px; border-bottom: 2px solid var(--primary-color); text-align: left; }
+        td { padding: 15px; border-bottom: 1px solid #f5f5f5; }
+        .badge { padding: 5px 15px; font-size: 12px; display: inline-block; }
+        .badge-hot { background-color: var(--primary-color); color: #fff; }
+        .badge-premium { background-color: #fdf6e9; color: var(--accent-color); border: 1px solid #faebcc; }
+        #ai-chat-widget { position: fixed; bottom: 30px; right: 30px; z-index: 2000; }
+        #chat-button { width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary-color); color: white; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; }
+        #chat-window { position: absolute; bottom: 80px; right: 0; width: 350px; height: 500px; background: white; border-radius: 12px; box-shadow: 0 5px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; border: 1px solid var(--border-color); }
+        #chat-window.active { display: flex; }
+        .chat-header { background: var(--primary-color); color: white; padding: 15px; font-weight: 500; display: flex; justify-content: space-between; }
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; }
+        .message { padding: 10px 15px; border-radius: 15px; max-width: 85%; font-size: 14px; }
+        .message.ai { background: #fff; align-self: flex-start; border: 1px solid #eee; }
+        .message.user { background: var(--primary-color); color: white; align-self: flex-end; }
+        .chat-input { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+        .chat-input input { flex: 1; border: 1px solid #ddd; padding: 8px 12px; border-radius: 20px; outline: none; }
+        .chat-input button { background: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+        #start-tutorial { position: fixed; bottom: 30px; left: 30px; background: var(--accent-color); color: white; padding: 10px 20px; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 1000; font-weight: 500; }
+        footer { text-align: center; padding: 60px 20px; color: #bbb; font-size: 12px; }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="logo">SNOW FACTORY</div>
+    <div class="nav-tabs">
+        <a href="index.html" class="nav-tab active">數據分析儀表板</a>
+        <a href="playground/index.html" class="nav-tab">Playground (架構說明)</a>
+    </div>
+</nav>
+<div class="container">
+    <div class="filter-section" data-intro="在此選擇您想要查看的門市據點。">
+        <span>門市據點篩選：</span>
+        <select id="storeFilter" onchange="updateDashboard()">
+            <option value="全部">所有門市總覽</option>
+            <option value="高雄店">高雄旗艦店</option><option value="信義店">信義門市</option><option value="新竹店">新竹門市</option>
+            <option value="桃園店">桃園門市</option><option value="台中一店">台中一店</option><option value="板橋店">板橋門市</option>
+            <option value="內湖店">內湖門市</option><option value="台南店">台南門市</option>
+        </select>
+    </div>
+    <div class="dashboard-grid">
+        <div class="card" data-intro="銷量對比圖。"><div class="card-title">銷售數量對比</div><canvas id="qtyChart"></canvas></div>
+        <div class="card" data-intro="營收價值對比圖。"><div class="card-title">營收價值對比</div><canvas id="amtChart"></canvas></div>
+        <div class="card" data-intro="數據列表。"><div class="card-title">銷售品項詳情</div><table id="summaryTable"><thead><tr><th>銷售品項</th><th>銷售總數</th><th>銷售金額</th><th>市場評估</th></tr></thead><tbody></tbody></table></div>
+    </div>
+</div>
+<div id="ai-chat-widget">
+    <div id="chat-button" onclick="toggleChat()" data-intro="問問 AI 助理數據洞察！"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
+    <div id="chat-window">
+        <div class="chat-header"><span>SNOW AI 助理</span><span onclick="toggleChat()" style="cursor:pointer">✕</span></div>
+        <div class="chat-messages" id="chat-messages"><div class="message ai">您好！請設定 API Key 即可開始分析。</div></div>
+        <div class="chat-input"><input type="text" id="user-input" placeholder="問問數據..." onkeypress="if(event.key==='Enter') sendMessage()"><button onclick="sendMessage()">發送</button></div>
+        <div style="padding:10px;text-align:center"><a href="#" onclick="setApiKey()" style="color:var(--accent-color);font-size:11px">設定 API Key</a></div>
+    </div>
+</div>
+<div id="start-tutorial" onclick="startTutorial()">新手教學 💡</div>
+<footer>&copy; 2026 SNOW FACTORY.</footer>
+<script>
+    const rawData = [{date:"2026-01-01",store:"高雄店",item:"沙拉醬",qty:435,amt:44476},{date:"2026/2/2",store:"高雄店",item:"冷凍水餃",qty:69,amt:17563},{date:"20260303",store:"信義店",item:"能量棒",qty:259,amt:9137},{date:"20260404",store:"新竹店",item:"蛋捲",qty:90,amt:17245},{date:"2026/5/5",store:"桃園店",item:"能量棒",qty:170,amt:28589},{date:"2026/6/6",store:"新竹店",item:"湯包",qty:478,amt:16412},{date:"20260707",store:"台中一店",item:"布丁",qty:117,amt:26949},{date:"20260808",store:"板橋店",item:"湯包",qty:438,amt:35337},{date:"2026/9/9",store:"高雄店",item:"即食雞胸",qty:326,amt:21056},{date:"2026/10/10",store:"新竹店",item:"杯裝優格",qty:59,amt:25965},{date:"2026-11-11",store:"內湖店",item:"蛋捲",qty:302,amt:4182},{date:"2026-12-12",store:"板橋店",item:"冷凍水餃",qty:36,amt:5978},{date:"13 Feb 2026",store:"高雄店",item:"蛋捲",qty:126,amt:39221},{date:"2026-02-14",store:"內湖店",item:"沙拉醬",qty:309,amt:8748},{date:"15 Apr 2026",store:"信義店",item:"即食雞胸",qty:325,amt:10652},{date:"16 May 2026",store:"桃園店",item:"布丁",qty:202,amt:48481},{date:"2026/5/17",store:"台南店",item:"沙拉醬",qty:6,amt:7791},{date:"2026-06-18",store:"內湖店",item:"杯裝優格",qty:355,amt:36869},{date:"2026-08-20",store:"高雄店",item:"氣泡飲",qty:393,amt:47527},{date:"20260921",store:"桃園店",item:"即食雞胸",qty:422,amt:42469},{date:"2026/10/22",store:"台南店",item:"冷凍水餃",qty:303,amt:30605},{date:"20261123",store:"台南店",item:"即食雞胸",qty:150,amt:42971},{date:"2026/12/24",store:"板橋店",item:"鮮奶茶",qty:67,amt:16079},{date:"2026/1/25",store:"高雄店",item:"即食雞胸",qty:389,amt:7414},{date:"2026/2/26",store:"台中一店",item:"蛋捲",qty:259,amt:13879},{date:"20260327",store:"台南店",item:"杯裝優格",qty:58,amt:41974},{date:"28 May 2026",store:"板橋店",item:"泡芙",qty:5,amt:48370},{date:"1 Jun 2026",store:"內湖店",item:"蛋捲",qty:166,amt:40248},{date:"2026/6/2",store:"台南店",item:"果醬",qty:376,amt:31548},{date:"20260703",store:"桃園店",item:"即食雞胸",qty:150,amt:5117},{date:"2026/8/4",store:"桃園店",item:"巧克力餅乾",qty:209,amt:3117},{date:"5 Apr 2026",store:"板橋店",item:"冷凍水餃",qty:463,amt:12285},{date:"20261006",store:"桃園店",item:"沙拉醬",qty:100,amt:10787},{date:"20261107",store:"台中一店",item:"杯裝優格",qty:36,amt:18131},{date:"2026-12-08",store:"信義店",item:"布丁",qty:333,amt:12731},{date:"20260109",store:"台南店",item:"沙拉醬",qty:270,amt:6192},{date:"2026/2/10",store:"內湖店",item:"堅果包",qty:115,amt:3264},{date:"20260311",store:"桃園店",item:"氣泡飲",qty:94,amt:1619},{date:"20260412",store:"新竹店",item:"杯裝優格",qty:466,amt:21394},{date:"2026-05-13",store:"新竹店",item:"杯裝優格",qty:181,amt:13434},{date:"20260614",store:"板橋店",item:"湯包",qty:485,amt:34867},{date:"2026-07-15",store:"高雄店",item:"杯裝優格",qty:322,amt:7988},{date:"2026-08-16",store:"桃園店",item:"堅果包",qty:226,amt:26361},{date:"2026/9/17",store:"高雄店",item:"蛋捲",qty:499,amt:6636},{date:"2026/10/18",store:"新竹店",item:"蛋捲",qty:339,amt:4418},{date:"2026-11-19",store:"台中一店",item:"果醬",qty:231,amt:38491},{date:"2026/12/20",store:"台南店",item:"布丁",qty:208,amt:29721},{date:"2026/1/21",store:"高雄店",item:"即食雞胸",qty:300,amt:22729}];
+    let qtyChart, amtChart;
+    let geminiApiKey = localStorage.getItem('SNOW_GEMINI_KEY') || "";
+
+    function updateDashboard() {
+        const filter = document.getElementById('storeFilter').value;
+        const filtered = filter === '全部' ? rawData : rawData.filter(d => d.store === filter);
+        const agg = {};
+        filtered.forEach(d => { if(d.item) { if(!agg[d.item]) agg[d.item] = {qty:0,amt:0}; agg[d.item].qty += d.qty; agg[d.item].amt += d.amt; } });
+        renderCharts(Object.keys(agg), Object.values(agg).map(v => v.qty), Object.values(agg).map(v => v.amt));
+        updateTable(agg);
+    }
+    function renderCharts(labels, qtys, amts) {
+        const colors = ['#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7', '#C7CEEA', '#A0E7E5', '#FF9AA2', '#F8B195', '#FDFD96', '#FAC898'];
+        if (qtyChart) qtyChart.destroy(); if (amtChart) amtChart.destroy();
+        const opt = { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { display: false } }, y: { grid: { display: false } } } };
+        qtyChart = new Chart(document.getElementById('qtyChart'), { type: 'bar', data: { labels, datasets: [{ data: qtys, backgroundColor: colors, borderRadius: 4 }] }, options: opt });
+        amtChart = new Chart(document.getElementById('amtChart'), { type: 'bar', data: { labels, datasets: [{ data: amts, backgroundColor: colors, borderRadius: 4 }] }, options: opt });
+    }
+    function updateTable(agg) {
+        const tbody = document.querySelector('#summaryTable tbody');
+        tbody.innerHTML = '';
+        const sorted = Object.keys(agg).sort((a, b) => agg[b].qty - agg[a].qty);
+        const maxQ = agg[sorted[0]]?.qty || 0;
+        sorted.forEach(item => {
+            let b = '<span class="badge">穩定</span>';
+            if (agg[item].qty === maxQ && maxQ > 0) b = '<span class="badge badge-hot">👑 熱銷首選</span>';
+            else if (item.includes('優格')) b = '<span class="badge badge-premium">核心產品</span>';
+            const row = document.createElement('tr');
+            row.innerHTML = `<td><strong>${item}</strong></td><td>${agg[item].qty.toLocaleString()}</td><td>$${agg[item].amt.toLocaleString()}</td><td>${b}</td>`;
+            tbody.appendChild(row);
+        });
+    }
+    function toggleChat() { document.getElementById('chat-window').classList.toggle('active'); }
+    function setApiKey() { 
+        const key = prompt("輸入您的 Gemini API Key (將儲存在本地):", geminiApiKey); 
+        if(key !== null) { geminiApiKey = key.trim(); localStorage.setItem('SNOW_GEMINI_KEY', geminiApiKey); alert("設定成功！"); }
+    }
+    async function sendMessage() {
+        const input = document.getElementById('user-input');
+        const text = input.value.trim(); if(!text) return;
+        addMessage(text, 'user'); input.value = '';
+        if(!geminiApiKey) { addMessage("尚未設定 API Key。", 'ai'); return; }
+        addMessage("思考中...", 'ai', 'loading');
+        const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+        let success = false;
+        for (const model of models) {
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ contents: [{ parts: [{ text: `銷售分析師模式。數據摘要：${JSON.stringify(rawData.slice(0,15))}。使用者問題：${text}` }] }] }) 
+                });
+                const data = await res.json();
+                if (!data.error && data.candidates) {
+                    const aiText = data.candidates[0].content.parts[0].text;
+                    document.querySelector('.message.loading').remove();
+                    addMessage(aiText, 'ai'); success = true; break;
+                }
+            } catch (e) {}
+        }
+        if (!success) { document.querySelector('.message.loading').remove(); addMessage("所有模型連線失敗，請檢查 API Key 權限。", 'ai'); }
+    }
+    function addMessage(text, type, cls = '') { const div = document.createElement('div'); div.className = `message ${type} ${cls}`; div.innerText = text; document.getElementById('chat-messages').appendChild(div); document.getElementById('chat-messages').scrollTop = 99999; }
+    function startTutorial() { introJs().setOptions({ nextLabel: '下一步', prevLabel: '上一步', doneLabel: '完成', steps: [ { title: '歡迎', intro: '這是數據儀表板。' }, { element: '.nav-tabs', intro: '點擊此處切換到 Playground 查看技術細節。' }, { element: '.filter-section', intro: '在此篩選門市。' }, { element: '#chat-button', intro: '與 AI 助理聊天。' } ] }).start(); }
+    updateDashboard();
+</script>
+</body>
+</html>
