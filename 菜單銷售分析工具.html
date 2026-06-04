@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Analytics | 菜單銷售分析</title>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #fcfcfc;
+            --card: #ffffff;
+            --text-main: #2d3436;
+            --text-sub: #95a5a6;
+            --accent: #55efc4; 
+            --accent-soft: #e3fcf7;
+            --border: #f1f2f6;
+            --shadow: 0 4px 24px rgba(0,0,0,0.02);
+        }
+
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+        body {
+            font-family: "PingFang TC", "Hiragino Sans GB", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 60px 20px;
+            font-weight: 300;
+            line-height: 1.5;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        header { text-align: center; margin-bottom: 60px; }
+        h1 { font-size: 1.5rem; font-weight: 500; letter-spacing: 6px; margin-bottom: 12px; }
+        header p { color: var(--text-sub); font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; }
+
+        .upload-wrapper {
+            background: var(--card);
+            border-radius: 30px;
+            padding: 80px 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .upload-wrapper:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.04); }
+        .upload-icon { font-size: 1.5rem; color: var(--accent); margin-bottom: 20px; display: block; }
+
+        .filter-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 40px;
+            gap: 20px;
+        }
+
+        .store-label { font-size: 0.8rem; color: var(--text-sub); letter-spacing: 1px; }
+
+        select {
+            appearance: none;
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 10px 30px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            cursor: pointer;
+            outline: none;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .dashboard { display: none; }
+        .dashboard.visible { display: block; animation: fadeIn 0.8s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; }
+        .card { background: var(--card); padding: 40px; border-radius: 32px; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+        .full-width { grid-column: 1 / -1; }
+
+        h2 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .stats-row { display: flex; justify-content: space-around; width: 100%; }
+        .stat-item { text-align: center; }
+        .stat-val { font-size: 1.8rem; font-weight: 300; display: block; }
+        .stat-label { font-size: 0.7rem; color: var(--text-sub); margin-top: 8px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 18px 10px; font-size: 0.85rem; }
+        th { text-align: left; color: var(--text-sub); font-weight: 400; border-bottom: 1px solid #f8f9fa; }
+        td { border-bottom: 1px solid #fcfcfc; }
+
+        .tag { font-size: 0.7rem; padding: 4px 10px; border-radius: 8px; background: #f8f9fa; color: var(--text-sub); }
+        .tag-hot { background: var(--accent-soft); color: #00b894; font-weight: 500; }
+
+        .chart-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px; /* 增加高度讓圖表更大 */
+        }
+
+        .strategy-box { background: #fffcfb; border-radius: 20px; padding: 25px; height: 100%; }
+        .strategy-item { margin-bottom: 16px; border-left: 2px solid #fab1a0; padding-left: 15px; }
+        .strategy-item strong { display: block; font-size: 0.9rem; font-weight: 400; margin-bottom: 4px; }
+        .strategy-item p { margin: 0; font-size: 0.75rem; color: #95a5a6; }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>MENU ANALYTICS</h1>
+        <p>Intelligence in Dining</p>
+    </header>
+
+    <div id="upload-zone" class="upload-wrapper">
+        <span class="upload-icon">✦</span>
+        <p style="font-size: 0.9rem; color: #95a5a6;">請上傳銷售數據報表</p>
+        <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls, .csv">
+    </div>
+
+    <div id="filter-bar" class="filter-section hidden">
+        <span class="store-label">LOCATION FILTER</span>
+        <select id="store-selector">
+            <option value="all">ALL STORES</option>
+        </select>
+    </div>
+
+    <div id="dashboard" class="dashboard">
+        <div class="grid">
+            <div class="card full-width">
+                <h2>Performance Summary</h2>
+                <div class="stats-row">
+                    <div class="stat-item"><span class="stat-val" id="qty">-</span><span class="stat-label">Units Sold</span></div>
+                    <div class="stat-item"><span class="stat-val" id="rev">-</span><span class="stat-label">Revenue</span></div>
+                    <div class="stat-item"><span class="stat-val" id="count">-</span><span class="stat-label">Menu Items</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Top Performers</h2>
+                <table id="hot-table">
+                    <thead><tr><th>ITEM</th><th>QTY</th><th>SHARE</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- 放大後的圖表卡片 -->
+            <div class="card">
+                <h2>Product Mix</h2>
+                <div class="chart-container">
+                    <canvas id="chart-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Bottom Performers</h2>
+                <table id="cold-table">
+                    <thead><tr><th>ITEM</th><th>QTY</th><th>STATUS</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>Strategic Actions</h2>
+                <div class="strategy-box">
+                    <div id="advice-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let rawData = [];
+    let myChart = null;
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('file-input');
+    const storeSelector = document.getElementById('store-selector');
+
+    uploadZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => handleFile(e.target.files[0]);
+    uploadZone.ondragover = (e) => { e.preventDefault(); uploadZone.style.background = '#fcfcfc'; };
+    uploadZone.ondrop = (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); };
+
+    function handleFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            initStoreFilter();
+            render();
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function initStoreFilter() {
+        const keys = Object.keys(rawData[0]);
+        const storeKey = keys.find(k => k.includes('門市') || k.includes('店') || k.includes('Store'));
+        if (storeKey) {
+            const stores = [...new Set(rawData.map(r => r[storeKey]))].filter(Boolean);
+            storeSelector.innerHTML = '<option value="all">ALL STORES</option>';
+            stores.forEach(s => storeSelector.innerHTML += `<option value="${s}">${s}</option>`);
+            document.getElementById('filter-bar').classList.remove('hidden');
+            storeSelector.onchange = () => render();
+        }
+    }
+
+    function detectKeys(keys, data) {
+        let nameKey = keys.find(k => (k.includes('名') || k.includes('品項') || k.includes('Item')) && !k.includes('碼') && !k.includes('號') && !k.includes('ID') && !k.includes('Code'));
+        if (!nameKey) {
+            nameKey = keys.find(k => typeof data[0][k] === 'string' && !k.includes('門市') && !k.includes('日期'));
+        }
+        const qtyKey = keys.find(k => k.includes('數量') || k.includes('份數') || k.includes('Qty')) || keys[1];
+        const revKey = keys.find(k => k.includes('金額') || k.includes('營收') || k.includes('Amount')) || keys[2];
+        return { nameKey, qtyKey, revKey };
+    }
+
+    function render() {
+        if (!rawData.length) return;
+        const keys = Object.keys(rawData[0]);
+        const { nameKey, qtyKey, revKey } = detectKeys(keys, rawData);
+        const storeKey = keys.find(k => k.includes('門市') || k.includes('店') || k.includes('Store'));
+        const selectedStore = storeSelector.value;
+
+        const filtered = (selectedStore === 'all' || !storeKey) 
+            ? rawData 
+            : rawData.filter(r => r[storeKey] === selectedStore);
+
+        const summary = {};
+        let totalQty = 0, totalRev = 0;
+
+        filtered.forEach(row => {
+            const name = row[nameKey];
+            const qty = parseFloat(row[qtyKey]) || 0;
+            const rev = parseFloat(row[revKey]) || 0;
+            if (name && isNaN(name)) { 
+                if (!summary[name]) summary[name] = { qty: 0, rev: 0 };
+                summary[name].qty += qty;
+                summary[name].rev += rev;
+                totalQty += qty;
+                totalRev += rev;
+            }
+        });
+
+        const sorted = Object.entries(summary)
+            .map(([name, v]) => ({ name, ...v }))
+            .sort((a, b) => b.qty - a.qty);
+
+        updateUI(sorted, totalQty, totalRev);
+    }
+
+    function updateUI(items, totalQty, totalRev) {
+        document.getElementById('dashboard').classList.add('visible');
+        document.getElementById('upload-zone').classList.add('hidden');
+
+        document.getElementById('qty').innerText = totalQty.toLocaleString();
+        document.getElementById('rev').innerText = '$' + totalRev.toLocaleString();
+        document.getElementById('count').innerText = items.length;
+
+        const renderTable = (id, list, isHot) => {
+            const body = document.querySelector(`#${id} tbody`);
+            body.innerHTML = '';
+            list.forEach(i => {
+                const tag = isHot ? `<span class="tag tag-hot">${((i.qty/totalQty)*100).toFixed(1)}%</span>` : `<span class="tag">Low</span>`;
+                body.innerHTML += `<tr><td>${i.name}</td><td>${i.qty}</td><td>${tag}</td></tr>`;
+            });
+        };
+
+        renderTable('hot-table', items.slice(0, 5), true);
+        renderTable('cold-table', items.slice(-5).reverse(), false);
+
+        if (myChart) myChart.destroy();
+        const ctx = document.getElementById('chart-canvas').getContext('2d');
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: items.slice(0, 8).map(i => i.name).concat('Others'),
+                datasets: [{
+                    data: items.slice(0, 8).map(i => i.qty).concat(items.slice(8).reduce((s, i) => s + i.qty, 0)),
+                    backgroundColor: ['#55efc4', '#81ecec', '#74b9ff', '#a29bfe', '#fab1a0', '#ffeaa7', '#fdcb6e', '#e17055', '#f1f2f6'],
+                    borderWidth: 0
+                }]
+            },
+            options: { 
+                cutout: '65%', // 稍微調厚一點，更有份量
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { boxWidth: 10, font: { size: 11 }, padding: 30 } 
+                    } 
+                } 
+            }
+        });
+
+        const advice = document.getElementById('advice-container');
+        const avg = totalQty / items.length;
+        const lowPerformers = items.filter(i => i.qty < (avg * 0.3)).slice(0, 4);
+        
+        advice.innerHTML = lowPerformers.length ? '' : '<p style="color:#bdc3c7; font-size:0.8rem">All items performing within range.</p>';
+        lowPerformers.forEach(i => {
+            advice.innerHTML += `
+                <div class="strategy-item">
+                    <strong>${i.name}</strong>
+                    <p>銷售低迷，建議檢核口味或進行推廣優惠。</p>
+                </div>
+            `;
+        });
+    }
+</script>
+
+</body>
+</html>
