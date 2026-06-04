@@ -88,7 +88,7 @@
     66     <div class="dashboard-grid">
     67         <div class="card" data-intro="銷量對比圖。"><div class="card-title">銷售數量對比</div><canvas
        id="qtyChart"></canvas></div>
-    68         <div class="card" data-intro="營收價值對比圖。"><div class="card-title">營收價值對比</div><canvas
+    68         <div class="card" data-intro="營收價值對比圖。"><div class="card-title">營營價值對比</div><canvas
        id="amtChart"></canvas></div>
     69         <div class="card" data-intro="數據列表。"><div class="card-title">銷售品項詳情</div><table
        id="summaryTable"><thead><tr><th>銷售品項</th><th>銷售總數</th><th>銷售金額</th><th>市場評估</th></tr></thead><tbody></t
@@ -202,7 +202,7 @@
        fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
    133                     method: 'POST', headers: { 'Content-Type': 'application/json' },
    134                     body: JSON.stringify({ contents: [{ parts: [{ text:
-       `銷售分析師模式。數據摘要：${JSON.stringify(rawData.slice(0,15))}。使用者問題：${text}` }] }] })
+       `你是一位銷售數據分析師。數據摘要：${JSON.stringify(rawData.slice(0,15))}。使用者問題：${text}` }] }] })
    135                 });
    136                 const data = await res.json();
    137                 if (!data.error && data.candidates) {
