@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雪坊精品 | 系統架構說明 (Playground)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-color: #003366; --accent-color: #c5a059; --bg-color: #fcfcfc; --text-color: #333333; --border-color: #e0e0e0; }
+        * { box-sizing: border-box; font-family: 'Noto Sans TC', sans-serif; font-size: 15px; }
+        body { margin: 0; background-color: var(--bg-color); color: var(--text-color); line-height: 1.8; }
+        .navbar { background-color: #ffffff; padding: 20px 0; text-align: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1000; }
+        .navbar .logo { font-size: 28px; font-weight: 700; color: var(--primary-color); letter-spacing: 4px; }
+        .nav-tabs { display: flex; justify-content: center; gap: 30px; margin-top: 15px; }
+        .nav-tab { cursor: pointer; padding: 10px 20px; color: #777; font-weight: 500; border-bottom: 2px solid transparent; transition: 0.3s; text-decoration: none; }
+        .nav-tab.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
+        .container { max-width: 900px; margin: 50px auto; padding: 0 30px; }
+        h1, h2 { color: var(--primary-color); }
+        h2 { border-left: 4px solid var(--accent-color); padding-left: 15px; margin-top: 40px; }
+        .code-block { background: #f4f4f4; padding: 20px; border-radius: 4px; font-family: monospace; overflow-x: auto; margin: 20px 0; border: 1px solid #ddd; }
+        .flow-diagram { display: flex; justify-content: space-around; align-items: center; margin: 40px 0; padding: 30px; background: #fff; border: 1px dashed var(--accent-color); text-align: center; }
+        .flow-step { flex: 1; }
+        .flow-arrow { font-size: 24px; color: var(--accent-color); font-weight: bold; }
+        footer { text-align: center; padding: 60px 20px; color: #bbb; font-size: 12px; }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="logo">SNOW FACTORY</div>
+    <div class="nav-tabs">
+        <a href="../index.html" class="nav-tab">數據分析儀表板</a>
+        <a href="index.html" class="nav-tab active">Playground (架構說明)</a>
+    </div>
+</nav>
+<div class="container">
+    <h1>系統架構與開發導覽 (Playground)</h1>
+    <p>本頁面詳述了雪坊銷售數據分析系統的內部運作機制，作為開發者調試與理解架構之用。</p>
+
+    <h2>1. 核心設計理念</h2>
+    <p>本系統採用 **輕量化單頁應用 (SPA)** 的思維，不依賴龐大的框架（如 React/Vue），而是使用 Vanilla JS 以獲得最高的載入速度與 GitHub Pages 相容性。</p>
+
+    <h2>2. 資料流動流程</h2>
+    <div class="flow-diagram">
+        <div class="flow-step"><strong>1. 數據獲取</strong><br><small>rawData Array</small></div>
+        <div class="flow-arrow">➔</div>
+        <div class="flow-step"><strong>2. 篩選與計算</strong><br><small>Array.filter / Map</small></div>
+        <div class="flow-arrow">➔</div>
+        <div class="flow-step"><strong>3. 圖表渲染</strong><br><small>Chart.js API</small></div>
+        <div class="flow-arrow">➔</div>
+        <div class="flow-step"><strong>4. UI 更新</strong><br><small>DOM Manipulation</small></div>
+    </div>
+
+    <h2>3. 技術規格</h2>
+    <ul>
+        <li><strong>繪圖引擎：</strong> Chart.js v3+</li>
+        <li><strong>互動導覽：</strong> Intro.js</li>
+        <li><strong>AI 分析：</strong> Google Gemini API (REST)</li>
+        <li><strong>樣式控制：</strong> CSS Custom Properties (Variables)</li>
+    </ul>
+
+    <h2>4. 開發工具與輔助腳本 (Scripts)</h2>
+    <p>除了前端展現層，本專案還包含以下位於根目錄的腳本，用於數據的預處理與離線分析：</p>
+    <ul>
+        <li><strong>analyze_fnb.py (Python/Pandas)：</strong>
+            <br><small>功能：數據清洗專家。負責處理 CSV 中的缺失值、移除重複紀錄，並進行精確的統計聚合運算。</small>
+        </li>
+        <li><strong>analyze_fnb.ps1 (PowerShell)：</strong>
+            <br><small>功能：快速分析工具。在終端機直接產出「熱銷 Top 5」與「滯銷 Bottom 5」的品項對比報告。</small>
+        </li>
+        <li><strong>analyze_fnb_v2.ps1 (PowerShell V2)：</strong>
+            <br><small>功能：增強型處理。支援欄位映射與格式轉換，將原始 CSV 轉化為更易讀的結構化數據。</small>
+        </li>
+    </ul>
+
+    <h2>5. 核心邏輯範例</h2>
+    <div class="code-block">
+const agg = {};
+filtered.forEach(d => {
+    if (!agg[d.item]) agg[d.item] = { qty: 0, amt: 0 };
+    agg[d.item].qty += d.qty;
+    agg[d.item].amt += d.amt;
+});
+    </div>
+
+    <h2>5. 目錄結構</h2>
+    <div class="code-block">
+/firdi-f-MENU-ANALYTICS
+  ├── index.html        (主儀表板)
+  └── /playground
+        └── index.html  (本架構說明頁)
+    </div>
+</div>
+<footer>&copy; 2026 SNOW FACTORY ARCHITECTURE.</footer>
+</body>
+</html>
